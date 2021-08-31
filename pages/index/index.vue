@@ -2,34 +2,27 @@
 	<view>
 		<image class="logo" src="../../images/logo.png" mode="aspectFit"></image>
 		<view class="list">
-			<view class="main-section" @click="showSubSection">
-				<view class="main-section-no">1</view>
-				<view class="main-section-content">
-					<view class="main-section-title">XXXXXX</view>
-					<view class="main-section-update-time">2021-08-30</view>
+			<block v-for="(item,index) in main_section">
+				<view class="main-section" @click="showSubSection(item.no, item.title)">
+					<view class="main-section-no">{{index}}</view>
+					<view class="main-section-content">
+						<view class="main-section-title">{{item.title}}</view>
+						<view class="main-section-update-time">{{item.time}}</view>
+					</view>
 				</view>
-			</view>
-			<view class="main-section">
-				<view class="main-section-no">2</view>
-				<view class="main-section-content">
-					<view class="main-section-title">XXXXXX</view>
-					<view class="main-section-update-time">2021-08-30</view>
-				</view>
-			</view>
+			</block>
 		</view>
 		<view class="sub-section-cover" v-if="show_subsection" :animation="animationData">
 			<view class="sub-section-box">
-				<view class="main-title">XXXXXX</view>
+				<view class="main-title">{{currentTitle}}</view>
 				<view class="sub-section-list">
-					<view class="sub-section-content">
-						<view class="sub-section-title">XXXXXX</view>
-						<view class="sub-section-update-time">2021-08-30</view>
-					</view>
-					<view class="sub-section-line"></view>
-					<view class="sub-section-content">
-						<view class="sub-section-title">XXXXXX</view>
-						<view class="sub-section-update-time">2021-08-30</view>
-					</view>
+					<block v-for="(item,index) in sub_section">
+						<view class="sub-section-content">
+							<view class="sub-section-title">{{item.title}}</view>
+							<view class="sub-section-update-time">{{item.time}}</view>
+						</view>
+						<view class="sub-section-line"></view>
+					</block>
 				</view>
 			</view>
 			<view class="sub-section-close" @click="closeSubSection">Close</view>
@@ -42,23 +35,61 @@
 		data() {
 			return {
 				show_subsection: 0,
-				animationData: {}
+				animationData: {},
+				main_section: [],
+				sub_section: []
 			}
 		},
 		onLoad() {
 
 		},
+		onShow() {
+			this.getMainSection()
+		},
 		methods: {
-			showSubSection() {
-				console.log ('subsection showed')
+			getMainSection() {
+				uni.request({
+					url: 'http://revan.game-win.cn/api/section', 
+					data: {},
+					header: {
+						'content-type': 'application/x-www-form-urlencoded'
+
+					},
+					success: (res) => {
+						console.log(res.data)
+						this.main_section = res.data.data
+					}
+				})
+			},
+			showSubSection(main_section_no, main_section_title) {
+				console.log(main_section_title)
+				console.log('subsection showed')
+				this.currentTitle = main_section_title
+				this.getSubSection(main_section_no)
 				this.show_subsection = !this.show_subsection
 				this.showCoverAnimation()
+			},
+			getSubSection(no) {
+				uni.request({
+					url: 'http://revan.game-win.cn/api/subsection', 
+					data: {
+						no: no
+					},
+					header: {
+						'content-type': 'application/x-www-form-urlencoded'
+
+					},
+					success: (res) => {
+						console.log(res.data.data)
+						this.sub_section = res.data.data
+					}
+				})
 			},
 			closeSubSection() {
 				var that = this
 				this.hideCoverAnimation()
 				setTimeout(function() {
-					console.log ('subsection closed')
+					console.log('subsection closed')
 					that.show_subsection = !that.show_subsection
 				}, 650);
 			},
@@ -95,7 +126,7 @@
 			sans-serif;
 		background: rgba(240, 240, 240, 1);
 	}
-	
+
 	.logo {
 		width: 680rpx;
 		height: 100rpx;
