@@ -9,16 +9,12 @@
 			<swiper-item>
 				<view class="swiper-item">
 					<view class="list">
-						<view class="text-title m-left">输入用户名及密码</view>
+						<view class="text-title m-left">输入手机号码登录</view>
 						<view class="inputView">
-							<input @input="GetName" maxlength="25" name="Name" placeholder="用户名"
+							<input @input="GetTel" maxlength="25" name="Name" placeholder="手机号码"
 								placeholderStyle="color:gray" style="height:80rpx;line-height:80rpx;width:100%"></input>
 						</view>
-						<view class="inputView">
-							<input @input="GetPaw" password="true" maxlength="25" name="Name" placeholder="密码"
-								placeholderStyle="color:gray" style="height:80rpx;line-height:80rpx;width:100%"></input>
-						</view>
-						<button type="default" class="login">登录</button>
+						<button type="default" class="login" @click="Login()">登录</button>
 					</view>
 				</view>
 			</swiper-item>
@@ -31,18 +27,26 @@
 								placeholderStyle="color:gray" style="height:80rpx;line-height:80rpx;width:100%"></input>
 						</view>
 						<view class="inputView">
+							<input @input="GetTel" maxlength="25" name="Name" placeholder="手机号码"
+								placeholderStyle="color:gray" style="height:80rpx;line-height:80rpx;width:100%"></input>
+						</view>
+						<!--view class="inputView">
 							<input @input="GetPaw" password="true" maxlength="25" name="Name" placeholder="密码"
 								placeholderStyle="color:gray" style="height:80rpx;line-height:80rpx;width:100%"></input>
 						</view>
 						<view class="inputView">
 							<input @input="GetPaw" password="true" maxlength="25" name="Name" placeholder="再次确认密码"
 								placeholderStyle="color:gray" style="height:80rpx;line-height:80rpx;width:100%"></input>
-						</view>
-						<button type="default" class="login reg">注册</button>
+						</view-->
+						<button type="default" class="login reg" @click="Register()">注册</button>
 					</view>
 				</view>
 			</swiper-item>
 		</swiper>
+		<view class="user-cover" v-if="user_cover">
+			<view class="user-name">HELLO,{{name}}</view>
+			<view class="user-status">{{user_tip}}</view>
+		</view>
 	</view>
 </template>
 
@@ -53,13 +57,15 @@
 				current: 0,
 				show_cover: false,
 				animationData: {},
-				off: false
+				off: false,
+				user_cover: false,
+				name: '',
+				user_tip: ''
 			}
 		},
-		onLoad: function() {
-		},
-		onshow: function() {
-
+		onLoad: function() {},
+		onShow: function() {
+			this.checkUserStatus()
 		},
 		methods: {
 			changePages(e) {
@@ -68,25 +74,139 @@
 			},
 			GetName(e) {
 				console.log(e.detail.value)
+				this.name = e.detail.value
+			},
+			GetTel(e) {
+				console.log(e.detail.value)
+				this.tel = e.detail.value
 			},
 			swichNav(e) {
 				this.current = e.currentTarget.dataset.current
 				console.log(e)
 			},
-			Login() {
+			Register() {
+				var that = this
 				uni.request({
-					url: "",
+					url: "http://revan.game-win.cn/api/reg",
 					header: {
 						"content-type": "application/x-www-form-urlencoded"
 					},
 					method: "POST",
 					data: {
-						matchid: e
+						name: that.name,
+						tel: that.tel
 					},
 					success: (res) => {
 						console.log(res.data)
+						if (res.data.data == 0) {
+							uni.showModal({
+								title: '提示',
+								content: '手机号已存在',
+								confirmText: "确认", // 确认按钮文字 
+								showCancel: false, // 是否显示取消按钮，默认为 true
+								confirmColor: '#f55850',
+								cancelColor: '#39B54A',
+								success: (res) => {
+									if (res.confirm) {
+										//that.gotoPage('/pages/index/index')
+									} else {
+										console.log('else', res)
+									}
+								}
+							})
+						} else {
+							this.uid = res.data.data
+							this.status = 1
+							uni.setStorageSync('uid', res.data.data)
+							uni.setStorageSync('status', 1)
+							uni.showModal({
+								title: '提示',
+								content: '注册成功，请等待管理员审核',
+								confirmText: "确认", // 确认按钮文字 
+								showCancel: false, // 是否显示取消按钮，默认为 true
+								confirmColor: '#f55850',
+								cancelColor: '#39B54A',
+								success: (res) => {
+									if (res.confirm) {
+										that.checkUserStatus()
+									} else {
+										console.log('else', res)
+									}
+								}
+							})
+						}
+
 					}
 				})
+			},
+			Login() {
+				var that = this
+				uni.request({
+					url: "http://revan.game-win.cn/api/login",
+					header: {
+						"content-type": "application/x-www-form-urlencoded"
+					},
+					method: "POST",
+					data: {
+						tel: that.tel
+					},
+					success: (res) => {
+						if (res.data.data == 0) {
+							uni.showModal({
+								title: '提示',
+								content: '手机号码输入错误，请重试',
+								confirmText: "确认", // 确认按钮文字 
+								showCancel: false, // 是否显示取消按钮，默认为 true
+								confirmColor: '#f55850'
+							})
+						} else {
+							uni.setStorageSync('userinfo', res.data.data)
+							uni.setStorageSync('uid', res.data.data.uid)
+							var status = res.data.data.status
+							that.name = res.data.data.name
+							if (status == 1) {
+								that.user_tip = '待认证'
+							}
+							if (status == 2) {
+								that.user_tip = '已认证'
+							}
+							that.user_cover = 1
+						}
+						console.log(res.data)
+					}
+				})
+			},
+			checkUserStatus() {
+				var that = this
+				var uid = wx.getStorageSync('uid')
+				if (!uid) {
+					return 0
+				} else {
+					uni.request({
+						url: "http://revan.game-win.cn/api/user",
+						header: {
+							"content-type": "application/x-www-form-urlencoded"
+						},
+						method: "POST",
+						data: {
+							uid: uid
+						},
+						success: (res) => {
+							var status = res.data.data.status
+							that.status = status
+							uni.setStorageSync('userinfo', res.data.data)
+							uni.setStorageSync('uid', res.data.data.uid)
+							that.name = res.data.data.name
+							if (status == 1) {
+								that.user_tip = '待认证'
+							}
+							if (status == 2) {
+								that.user_tip = '已认证'
+							}
+							that.user_cover = 1
+						}
+					})
+				}
 			}
 		}
 	}
@@ -194,7 +314,7 @@
 
 	.upload-cover {
 		opacity: 0;
-		background: linear-gradient(top,#f5d900,rgba(255,255,255,0.95),rgba(255,255,255,0.95));
+		background: linear-gradient(top, #f5d900, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95));
 		position: fixed;
 		width: 90%;
 		height: 100%;
@@ -259,5 +379,33 @@
 		font-size: 40rpx;
 		font-weight: bold;
 		box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.5);
+	}
+
+	.user-cover {
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		background: linear-gradient(45deg, #fbffc6,#ffa0b2,#7ef5ff);
+		z-index: 10;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.user-name {
+		width: 100%;
+		text-align: center;
+		font-size: 2.3em;
+		font-weight: bold;
+		color: #333333;
+		text-shadow: 0 0 30rpx #e2e2e2;
+	}
+
+	.user-status {
+		font-size: 0.9em;
+		color: #999999;
+		margin: 20rpx 0 0 0;
 	}
 </style>

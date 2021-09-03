@@ -3,19 +3,19 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "RE’VAN",
+				"navigationBarTitleText": "RE'VAN",
 				"navigationBarBackgroundColor": "#f8f8f8"
 			}
 		},{
 			"path": "pages/user/user",
 			"style": {
-				"navigationBarTitleText": "RE’VAN",
+				"navigationBarTitleText": "RE'VAN",
 				"navigationBarBackgroundColor": "#f8f8f8"
 			}
 		},{
 			"path": "pages/article/article",
 			"style": {
-				"navigationBarTitleText": "RE’VAN",
+				"navigationBarTitleText": "RE'VAN",
 				"navigationBarBackgroundColor": "#f8f8f8"
 			}
 		}
